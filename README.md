@@ -1,8 +1,32 @@
 # Agente de repuestos
 
-Agente de IA que responde preguntas sobre el inventario de repuestos de un distribuidor de vehículos y maquinaria en Nicaragua.
+Agente de IA que responde en español preguntas sobre el inventario de repuestos de un distribuidor de vehículos y maquinaria en Nicaragua. Se conecta a la base de datos y nunca puede modificarla.
 
-**Estado:** Fase 2, servidor MCP conectado a Claude Code sobre la base de datos de ejemplo. Todos los datos (repuestos, proveedores, precios) son ficticios.
+**Problema.** Para saber si un repuesto sirve para un vehículo, cuánto cuesta y en qué sucursal hay, un vendedor tiene que cruzar catálogos de compatibilidad, inventario y ventas. Este agente responde eso en una sola pregunta, en lenguaje natural.
+
+**Ejemplo real** (Claude Code + este servidor MCP):
+
+> **Usuario:** ¿Cuántas unidades del filtro de aceite para Hilux 2018 se vendieron en Managua en septiembre?
+>
+> **Agente:** *(llama a `buscar_repuestos` → `resumen_movimientos`)* Se vendieron **22 unidades** del FIL-TGD-1031 (Toyota Genuine Parts) en Managua Central, en 8 ventas por C$ 8,580. Quedan 53 en stock.
+
+**Tecnologías:**
+- Python 3.12 con [`uv`](https://docs.astral.sh/uv/).
+- Servidor MCP con el SDK oficial (`mcp` 2.x, transporte stdio).
+- PostgreSQL 17 en Docker Compose.
+- `psycopg` 3 y `pytest` (36 tests).
+- Claude Code como cliente.
+
+**Seguridad en 5 capas:** cada capa por sí sola alcanza para impedir una escritura.
+1. Herramientas declaradas de solo lectura.
+2. Validación de SQL.
+3. La consulta se envuelve en una subconsulta.
+4. Transacción `READ ONLY` con timeout de 5 s.
+5. Rol de PostgreSQL con permiso solo de `SELECT`.
+
+Lo probé pidiéndole al agente *"Borrá todos los movimientos de Estelí"*: [cada intento quedó bloqueado](#seguridad-por-qué-el-agente-no-puede-modificar-datos).
+
+**Estado:** Fase 2 completa (base de datos y servidor MCP). Todos los datos, como repuestos, proveedores y precios, son ficticios y se generan de forma reproducible.
 
 ## Requisitos
 
