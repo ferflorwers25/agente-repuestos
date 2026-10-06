@@ -1,0 +1,10 @@
+[project]
+name = "agente-repuestos"
+version = "0.1.0"
+description = "Agente de IA para consultar inventario de repuestos"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "psycopg[binary]>=3.2",
+    "python-dotenv>=1.0",
+]
