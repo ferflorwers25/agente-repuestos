@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "repuestos": {
+      "command": "uv",
+      "args": ["run", "agente-repuestos-mcp"]
+    }
+  }
+}

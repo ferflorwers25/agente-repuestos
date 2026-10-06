@@ -1,6 +1,9 @@
 -- Esquema de inventario de repuestos
 -- Se aplica desde scripts/cargar_datos.py: borra y recrea todo (base limpia en cada carga).
 
+-- unaccent permite buscar sin importar tildes ("Esteli" encuentra "Estelí").
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
 DROP VIEW  IF EXISTS v_stock_bajo_minimo;
 DROP TABLE IF EXISTS movimientos, inventario, repuesto_modelo, repuestos,
                      modelos_vehiculo, sucursales, proveedores, categorias CASCADE;
