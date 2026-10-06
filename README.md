@@ -76,7 +76,7 @@ El agente siempre se debe conectar con este rol, nunca con el administrador.
 - 200 repuestos, 30 modelos (pickups, autos, camiones, motos y maquinaria), 8 proveedores y 5 sucursales.
 - Unos 19 mil movimientos entre el 1 de abril y el 30 de septiembre de 2026.
 - Las ventas siguen la demanda de cada repuesto. Managua vende más que las demás sucursales, y los filtros y lubricantes se venden más que un alternador. Cuando el stock baja del punto de reorden, se hace un pedido que llega según el tiempo de entrega del proveedor.
-- Unos 30 pares repuesto/sucursal dejan de reabastecerse en las últimas semanas, así que terminan por debajo del mínimo (varios en cero).
+- Unos 30 pares repuesto/sucursal terminan bajo el mínimo: la mayoría con algo de stock y unos 7 en cero. Algunos ocurren solos (un pedido que todavía no llega) y otros se fuerzan cortando el reabastecimiento en las últimas semanas.
 
 ## Consultas de ejemplo
 

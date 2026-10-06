@@ -27,7 +27,9 @@ SEMILLA = 42
 TOTAL_REPUESTOS = 200
 FECHA_INICIO = date(2026, 4, 1)
 FECHA_FIN = date(2026, 9, 30)
-PARES_PROBLEMA = 30  # pares repuesto/sucursal que dejan de reabastecerse al final
+# Pares repuesto/sucursal que dejan de reabastecerse al final del período.
+PARES_BAJO_CON_STOCK = 18  # terminan bajo el mínimo pero con algo de stock
+PARES_EN_CERO = 3          # terminan agotados (se suman a los que se agotan solos)
 ZONA = ZoneInfo("America/Managua")
 
 
@@ -168,19 +170,36 @@ def generar_inventario(rng, repuestos):
     proveedores = {p[0]: p for p in cat.PROVEEDORES}
     pares = [(r, s) for r in repuestos for s in range(1, len(cat.SUCURSALES) + 1)]
 
-    # Algunos pares de demanda media/alta quedan sin reabastecer las últimas semanas.
-    candidatos = [p for p in pares if p[0]["demanda"] != "baja"]
-    problema = {(r["id"], s) for r, s in rng.sample(candidatos, PARES_PROBLEMA)}
-
-    inventario, movimientos = [], []
-    for repuesto, sucursal_id in pares:
+    def simular(repuesto, sucursal_id, corte_dias=None):
+        # Cada par tiene su propia semilla: el resultado de un par no depende de los demás.
+        rng_par = random.Random(f"{SEMILLA}-{repuesto['id']}-{sucursal_id}")
         _, _, _, _, _, lead_min, lead_max = proveedores[repuesto["proveedor"]]
         peso = cat.SUCURSALES[sucursal_id - 1][6]
-        corte = None
-        if (repuesto["id"], sucursal_id) in problema:
-            corte = FECHA_FIN - timedelta(days=rng.randint(35, 80))
-        stock, minimo, movs = simular_par(rng, repuesto, sucursal_id, peso, lead_min, lead_max, corte)
-        inventario.append((sucursal_id, repuesto["id"], stock, minimo))
+        corte = FECHA_FIN - timedelta(days=corte_dias) if corte_dias else None
+        return simular_par(rng_par, repuesto, sucursal_id, peso, lead_min, lead_max, corte)
+
+    resultados = {(r["id"], s): simular(r, s) for r, s in pares}
+
+    # Algunos pares de demanda media/alta quedan sin reabastecer las últimas semanas.
+    # Para cada uno se prueban días de corte hasta lograr el resultado buscado:
+    # primero se completan los agotados y luego los que quedan bajo el mínimo con stock.
+    candidatos = [p for p in pares if p[0]["demanda"] != "baja"]
+    rng.shuffle(candidatos)
+    faltan = {"cero": PARES_EN_CERO, "bajo": PARES_BAJO_CON_STOCK}
+    for repuesto, sucursal_id in candidatos:
+        objetivo = "cero" if faltan["cero"] else "bajo" if faltan["bajo"] else None
+        if objetivo is None:
+            break
+        for corte_dias in range(10, 91, 5):
+            stock, minimo, movs = simular(repuesto, sucursal_id, corte_dias)
+            if (stock == 0) if objetivo == "cero" else (0 < stock < minimo):
+                resultados[(repuesto["id"], sucursal_id)] = (stock, minimo, movs)
+                faltan[objetivo] -= 1
+                break
+
+    inventario, movimientos = [], []
+    for (repuesto_id, sucursal_id), (stock, minimo, movs) in resultados.items():
+        inventario.append((sucursal_id, repuesto_id, stock, minimo))
         movimientos.extend(movs)
 
     movimientos.sort(key=lambda m: m[6])
